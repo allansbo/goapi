@@ -30,3 +30,6 @@ go.work.sum
 
 # tmp Go air
 tmp/
+
+# logs
+logs/

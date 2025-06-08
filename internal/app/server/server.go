@@ -6,7 +6,7 @@ import (
 	"github.com/allansbo/goapi/internal/app/server/router"
 	"github.com/allansbo/goapi/internal/config"
 	"github.com/gofiber/fiber/v2"
-	"log"
+	"log/slog"
 )
 
 func Initialize(cfg *config.EnvConfig) {
@@ -15,5 +15,9 @@ func Initialize(cfg *config.EnvConfig) {
 	middleware.UseJSONMiddleware(app)
 	router.MakeRoutes(app)
 
-	log.Fatal(app.Listen(fmt.Sprintf(":%s", cfg.AppPort)))
+	slog.Info("Server running", "Port", cfg.AppPort)
+	if err := app.Listen(fmt.Sprintf(":%s", cfg.AppPort)); err != nil {
+		slog.Error("error on running server", "error", err)
+	}
+
 }
