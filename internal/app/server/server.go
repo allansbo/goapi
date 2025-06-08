@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func RunServer(cfg *config.EnvConfig) {
+func Initialize(cfg *config.EnvConfig) {
 	app := fiber.New()
 
 	middleware.UseJSONMiddleware(app)

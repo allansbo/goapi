@@ -17,5 +17,5 @@ func init() {
 }
 
 func main() {
-	server.RunServer(cfg)
+	server.Initialize(cfg)
 }
