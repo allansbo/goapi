@@ -32,4 +32,4 @@ go.work.sum
 tmp/
 
 # logs
-logs/
+logs/*log
