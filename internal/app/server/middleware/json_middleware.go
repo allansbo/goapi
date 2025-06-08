@@ -1,6 +1,9 @@
 package middleware
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+	"net/http"
+)
 
 func UseJSONMiddleware(app *fiber.App) {
 	app.Use(func(ctx *fiber.Ctx) error {
@@ -10,7 +13,7 @@ func UseJSONMiddleware(app *fiber.App) {
 				return ctx.Next()
 			}
 
-			return ctx.JSON(fiber.Map{"error": "Invalid format. Only JSON is allowed."})
+			return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid format. Only JSON is allowed."})
 		default:
 			return ctx.Next()
 		}
