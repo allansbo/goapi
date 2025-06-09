@@ -1,0 +1,23 @@
+services:
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    container_name: db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+    volumes:
+      - mongodb_data:/data/db
+  api:
+    build: .
+    container_name: api
+    environment:
+      DB_HOST: "mongodb"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
