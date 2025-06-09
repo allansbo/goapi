@@ -1,15 +1,18 @@
 package entity
 
 import (
-	"github.com/allansbo/goapi/internal/app/server/dto"
 	"time"
+
+	"github.com/allansbo/goapi/internal/app/server/dto"
 )
 
+// Coordinates is the entity that represents the coordinates of a location.
 type Coordinates struct {
 	Latitude  string `bson:"latitude" json:"latitude"`
 	Longitude string `bson:"longitude" json:"longitude"`
 }
 
+// Location is the entity that represents the location of a vehicle.
 type Location struct {
 	ID        string       `bson:"_id,omitempty" json:"id"`
 	VehicleId string       `bson:"vehicle_id" json:"vehicle_id"`
@@ -19,6 +22,8 @@ type Location struct {
 	Status    string       `bson:"status" json:"status"`
 }
 
+// NewLocationInApp is a function that creates a new location in the application.
+// The user input was validated by the *dto.LocationInApp struct.
 func NewLocationInApp(location *dto.LocationInApp) *Location {
 	return &Location{
 		VehicleId: location.VehicleId,
@@ -32,6 +37,8 @@ func NewLocationInApp(location *dto.LocationInApp) *Location {
 	}
 }
 
+// NewLocationInDB is a function that creates a new location in the application.
+// The data is comming from the database.
 func NewLocationInDB(location *dto.LocationInDB) *Location {
 	return &Location{
 		ID:        location.ID.Hex(),
@@ -46,6 +53,7 @@ func NewLocationInDB(location *dto.LocationInDB) *Location {
 	}
 }
 
+// NewLocationOutDB is a function that exports the location to the database format.
 func (l *Location) NewLocationOutDB() *dto.LocationOutDB {
 	return &dto.LocationOutDB{
 		VehicleId: l.VehicleId,
@@ -59,6 +67,8 @@ func (l *Location) NewLocationOutDB() *dto.LocationOutDB {
 	}
 }
 
+// NewLocationOutApp is a function that exports the location
+// to the format that will response a request user.
 func (l *Location) NewLocationOutApp() *dto.LocationOutApp {
 	return &dto.LocationOutApp{
 		ID:        l.ID,

@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// EnvConfig is the configuration for the application.
 type EnvConfig struct {
 	DBUser       string `mapstructure:"DB_USER"`
 	DBPass       string `mapstructure:"DB_PASS"`
@@ -16,6 +17,7 @@ type EnvConfig struct {
 	AppPort      string `mapstructure:"APP_PORT"`
 }
 
+// isValidConfig is a function that checks if the configuration is valid.
 func (e *EnvConfig) isValidConfig() error {
 	requiredFields := map[string]string{
 		"DB_USER":       e.DBUser,
@@ -36,6 +38,7 @@ func (e *EnvConfig) isValidConfig() error {
 	return nil
 }
 
+// LoadEnvConfig is a function that loads the configuration from the environment variables.
 func LoadEnvConfig() (*EnvConfig, error) {
 	viper.SetConfigFile(".env")
 	viper.AutomaticEnv()

@@ -10,6 +10,10 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// ConfigLog initializes the logging configuration for the application.
+// The log file is rotated using lumberjack to manage size and backups.
+// The log level is set to Info, and the logs are formatted in JSON.
+// The log file is stored in the "logs" directory under the current working directory.
 func ConfigLog(outputs ...io.Writer) {
 	output, err := os.Getwd()
 	if err != nil {

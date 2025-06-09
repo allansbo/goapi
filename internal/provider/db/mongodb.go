@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
+// MongoDBRepository implements the Repository interface for MongoDB operations.
 type MongoDBRepository struct {
 	DBUser       string
 	DBPass       string
@@ -23,6 +24,7 @@ type MongoDBRepository struct {
 	DBPort       string
 }
 
+// NewMongoDBRepository creates a new instance of MongoDBRepository with the provided configuration.
 func NewMongoDBRepository(cfg *config.EnvConfig) *MongoDBRepository {
 	return &MongoDBRepository{
 		DBUser:       cfg.DBUser,
@@ -34,6 +36,7 @@ func NewMongoDBRepository(cfg *config.EnvConfig) *MongoDBRepository {
 	}
 }
 
+// getMongoDBURI constructs the MongoDB connection URI using the repository's configuration.
 func (m *MongoDBRepository) getMongoDBURI() string {
 	return fmt.Sprintf(
 		"mongodb://%s:%s@%s:%s/%s?retryWrites=true&w=majority&authSource=admin&ssl=false",
@@ -66,7 +69,7 @@ func (m *MongoDBRepository) Connect() error {
 	return nil
 }
 
-// InsertOne inserts a document into the collection
+// InsertOne inserts a document into the collection.
 func (m *MongoDBRepository) InsertOne(location *dto.LocationOutDB) (string, error) {
 	data, err := bson.Marshal(location)
 	if err != nil {
@@ -95,6 +98,7 @@ func (m *MongoDBRepository) InsertOne(location *dto.LocationOutDB) (string, erro
 	return res.InsertedID.(bson.ObjectID).Hex(), nil
 }
 
+// GetOne retrieves a single document by its ID from the collection.
 func (m *MongoDBRepository) GetOne(id string) (*dto.LocationInDB, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
@@ -131,6 +135,7 @@ func (m *MongoDBRepository) GetOne(id string) (*dto.LocationInDB, error) {
 	return locationInDb, nil
 }
 
+// UpdateOne updates a single document by its ID in the collection.
 func (m *MongoDBRepository) UpdateOne(id string, location *dto.LocationOutDB) (bool, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
@@ -164,6 +169,7 @@ func (m *MongoDBRepository) UpdateOne(id string, location *dto.LocationOutDB) (b
 	return res.ModifiedCount == 1, nil
 }
 
+// DeleteOne deletes a single document by its ID from the collection.
 func (m *MongoDBRepository) DeleteOne(id string) (bool, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {

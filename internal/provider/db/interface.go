@@ -4,6 +4,7 @@ import (
 	"github.com/allansbo/goapi/internal/app/server/dto"
 )
 
+// Repository defines the interface for database operations related to locations.
 type Repository interface {
 	Connect() error
 	InsertOne(location *dto.LocationOutDB) (string, error)
