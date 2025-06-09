@@ -10,5 +10,6 @@ RUN CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" go build -o main cmd/main.go
 FROM gcr.io/distroless/static-debian12
 WORKDIR /src
 COPY --from=builder /app/main .
+COPY --from=builder /app/docs .
 COPY --from=builder /app/.env .
 CMD ["/src/main"]
