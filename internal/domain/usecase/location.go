@@ -10,10 +10,10 @@ type locationUseCase struct {
 	repository db.Repository
 }
 
-var service locationUseCase
+var l locationUseCase
 
 func LoadLocationUseCase(repository db.Repository) {
-	service.repository = repository
+	l.repository = repository
 }
 
 // SaveLocation saves a new location in the database and returns the saved location.
@@ -24,7 +24,7 @@ func SaveLocation(locationDataIn *dto.LocationInApp) (*dto.LocationOutApp, error
 	locationOutDB := locationEntity.NewLocationOutDB()
 
 	var err error
-	locationEntity.ID, err = service.repository.InsertOne(locationOutDB)
+	locationEntity.ID, err = l.repository.InsertOne(locationOutDB)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func SaveLocation(locationDataIn *dto.LocationInApp) (*dto.LocationOutApp, error
 // GetLocationById retrieves a location by its ID from the database.
 // It takes a string ID as input and returns a pointer to dto.LocationOutApp and an error if any occurs.
 func GetLocationById(id string) (*dto.LocationOutApp, error) {
-	locationInDB, err := service.repository.GetOne(id)
+	locationInDB, err := l.repository.GetOne(id)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func UpdateLocation(id string, locationDataIn *dto.LocationInApp) (bool, error) 
 	locationEntity := entity.NewLocationInApp(locationDataIn)
 	locationOutDB := locationEntity.NewLocationOutDB()
 
-	res, err := service.repository.UpdateOne(id, locationOutDB)
+	res, err := l.repository.UpdateOne(id, locationOutDB)
 	if err != nil {
 		return false, err
 	}
@@ -64,7 +64,7 @@ func UpdateLocation(id string, locationDataIn *dto.LocationInApp) (bool, error) 
 // DeleteLocation deletes a location by its ID from the database.
 // It takes a string ID as input and returns a boolean indicating success and an error if any occurs.
 func DeleteLocation(id string) (bool, error) {
-	res, err := service.repository.DeleteOne(id)
+	res, err := l.repository.DeleteOne(id)
 	if err != nil {
 		return false, err
 	}
