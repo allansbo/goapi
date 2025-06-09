@@ -4,98 +4,72 @@ import (
 	"context"
 	"fmt"
 	"github.com/allansbo/goapi/internal/app/server/dto"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"log/slog"
-	"time"
-
 	"github.com/allansbo/goapi/internal/config"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+	"log/slog"
 )
 
 // MongoDBRepository implements the Repository interface for MongoDB operations.
 type MongoDBRepository struct {
-	DBUser       string
-	DBPass       string
-	DBName       string
-	DBCollection string
-	DBHost       string
-	DBPort       string
+	client       *mongo.Client
+	ctx          context.Context
+	cancel       context.CancelFunc
+	uri          string
+	dbName       string
+	dbCollection string
 }
 
 // NewMongoDBRepository creates a new instance of MongoDBRepository with the provided configuration.
 func NewMongoDBRepository(cfg *config.EnvConfig) *MongoDBRepository {
-	return &MongoDBRepository{
-		DBUser:       cfg.DBUser,
-		DBPass:       cfg.DBPass,
-		DBName:       cfg.DBName,
-		DBCollection: cfg.DBCollection,
-		DBHost:       cfg.DBHost,
-		DBPort:       cfg.DBPort,
-	}
-}
+	ctx, cancel := context.WithCancel(context.Background())
 
-// getMongoDBURI constructs the MongoDB connection URI using the repository's configuration.
-func (m *MongoDBRepository) getMongoDBURI() string {
-	return fmt.Sprintf(
+	uri := fmt.Sprintf(
 		"mongodb://%s:%s@%s:%s/%s?retryWrites=true&w=majority&authSource=admin&ssl=false",
-		m.DBUser, m.DBPass, m.DBHost, m.DBPort, m.DBName,
+		cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName,
 	)
+
+	clientOpts := options.Client().ApplyURI(uri)
+	client, _ := mongo.Connect(clientOpts)
+
+	return &MongoDBRepository{
+		client:       client,
+		dbName:       cfg.DBName,
+		dbCollection: cfg.DBCollection,
+		uri:          uri,
+		ctx:          ctx,
+		cancel:       cancel,
+	}
 }
 
-// Connect create a connection to the mongodb database and use Ping to check if the connection is established.
-func (m *MongoDBRepository) Connect() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
+func (m *MongoDBRepository) Stop() {
+	m.cancel()
+}
 
-	clientOpts := options.Client().ApplyURI(m.getMongoDBURI())
-	client, err := mongo.Connect(clientOpts)
-	if err != nil {
-		return fmt.Errorf("failed to connect: %w", err)
-	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			slog.Error("error on disconnect from mongodb", "error", err.Error())
-		}
-	}()
-
-	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		return fmt.Errorf("ping failed: %w", err)
+func (m *MongoDBRepository) Ping() error {
+	if err := m.client.Ping(m.ctx, readpref.Primary()); err != nil {
+		return fmt.Errorf("mongodb ping failed: %w", err)
 	}
 
 	slog.Info("mongodb connection established")
-
 	return nil
+}
+
+func (m *MongoDBRepository) collection() *mongo.Collection {
+	return m.client.Database(m.dbName).Collection(m.dbCollection)
 }
 
 // InsertOne inserts a document into the collection.
 func (m *MongoDBRepository) InsertOne(location *dto.LocationOutDB) (string, error) {
-	data, err := bson.Marshal(location)
+	res, err := m.collection().InsertOne(m.ctx, location)
 	if err != nil {
 		return "", err
 	}
-
-	clientOpts := options.Client().ApplyURI(m.getMongoDBURI())
-	client, err := mongo.Connect(clientOpts)
-	if err != nil {
-		return "", fmt.Errorf("failed to connect: %w", err)
-	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			slog.Error("error on disconnect from mongodb", "error", err.Error())
-		}
-	}()
-
-	collection := client.Database(m.DBName).Collection(m.DBCollection)
-	res, err := collection.InsertOne(context.Background(), data)
-	if err != nil {
-		return "", err
-	}
-
-	slog.Info("document inserted successfully", "id", res.InsertedID, "document", location)
-
-	return res.InsertedID.(bson.ObjectID).Hex(), nil
+	id := res.InsertedID.(bson.ObjectID).Hex()
+	slog.Info("document inserted", "id", id)
+	return id, nil
 }
 
 // GetOne retrieves a single document by its ID from the collection.
@@ -105,20 +79,8 @@ func (m *MongoDBRepository) GetOne(id string) (*dto.LocationInDB, error) {
 		return nil, err
 	}
 
-	clientOpts := options.Client().ApplyURI(m.getMongoDBURI())
-	client, err := mongo.Connect(clientOpts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
-	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			slog.Error("error on disconnect from mongodb", "error", err.Error())
-		}
-	}()
-
-	collection := client.Database(m.DBName).Collection(m.DBCollection)
 	var res bson.M
-	err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&res)
+	err = m.collection().FindOne(m.ctx, bson.M{"_id": objectID}).Decode(&res)
 	if err != nil {
 		return nil, err
 	}
@@ -142,26 +104,9 @@ func (m *MongoDBRepository) UpdateOne(id string, location *dto.LocationOutDB) (b
 		return false, err
 	}
 
-	updateData := map[string]interface{}{"$set": location}
+	data := map[string]interface{}{"$set": location}
 
-	data, err := bson.Marshal(updateData)
-	if err != nil {
-		return false, err
-	}
-
-	clientOpts := options.Client().ApplyURI(m.getMongoDBURI())
-	client, err := mongo.Connect(clientOpts)
-	if err != nil {
-		return false, fmt.Errorf("failed to connect: %w", err)
-	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			slog.Error("error on disconnect from mongodb", "error", err.Error())
-		}
-	}()
-
-	collection := client.Database(m.DBName).Collection(m.DBCollection)
-	res, err := collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, data)
+	res, err := m.collection().UpdateOne(m.ctx, bson.M{"_id": objectID}, data)
 	if err != nil {
 		return false, err
 	}
@@ -176,19 +121,7 @@ func (m *MongoDBRepository) DeleteOne(id string) (bool, error) {
 		return false, err
 	}
 
-	clientOpts := options.Client().ApplyURI(m.getMongoDBURI())
-	client, err := mongo.Connect(clientOpts)
-	if err != nil {
-		return false, fmt.Errorf("failed to connect: %w", err)
-	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			slog.Error("error on disconnect from mongodb", "error", err.Error())
-		}
-	}()
-
-	collection := client.Database(m.DBName).Collection(m.DBCollection)
-	res, err := collection.DeleteOne(context.TODO(), bson.M{"_id": objectID})
+	res, err := m.collection().DeleteOne(m.ctx, bson.M{"_id": objectID})
 	if err != nil {
 		return false, err
 	}

@@ -6,7 +6,8 @@ import (
 
 // Repository defines the interface for database operations related to locations.
 type Repository interface {
-	Connect() error
+	Ping() error
+	Stop()
 	InsertOne(location *dto.LocationOutDB) (string, error)
 	GetOne(id string) (*dto.LocationInDB, error)
 	UpdateOne(id string, location *dto.LocationOutDB) (bool, error)

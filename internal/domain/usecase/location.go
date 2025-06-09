@@ -10,11 +10,11 @@ import (
 var (
 	AppConfig  *config.EnvConfig
 	repository db.Repository
+	err        error
 )
 
 // LoadAppConfig loads the application configuration from environment variables.
 func LoadAppConfig() error {
-	var err error
 	AppConfig, err = config.LoadEnvConfig()
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func LoadAppConfig() error {
 // LoadDatabaseRepository initializes the database repository using the application configuration.
 func LoadDatabaseRepository() error {
 	repository = db.NewMongoDBRepository(AppConfig)
-	if err := repository.Connect(); err != nil {
+	if err := repository.Ping(); err != nil {
 		return err
 	}
 
