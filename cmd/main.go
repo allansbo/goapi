@@ -42,6 +42,11 @@ func init() {
 	usecase.LoadLocationUseCase(service.repository)
 }
 
+//	@title			Location API
+//	@version		1.0
+//	@description	API to manage locations from vehicles
+//	@host			localhost:8080
+//	@BasePatch		/api/v1/
 func main() {
 	service.quit = make(chan os.Signal, 1)
 	signal.Notify(service.quit, syscall.SIGTERM, syscall.SIGINT)
