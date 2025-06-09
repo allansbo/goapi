@@ -2,22 +2,25 @@ package main
 
 import (
 	"github.com/allansbo/goapi/internal/app/server"
-	"github.com/allansbo/goapi/internal/config"
+	"github.com/allansbo/goapi/internal/domain/usecase"
 	"github.com/allansbo/goapi/internal/pkg/logs"
+	"log/slog"
 )
-
-var cfg *config.EnvConfig
 
 func init() {
 	logs.ConfigLog()
 
-	var err error
-	cfg, err = config.LoadEnvConfig()
-	if err != nil {
+	if err := usecase.LoadAppConfig(); err != nil {
+		slog.Error("error on loading environment", "error", err.Error())
+		panic(err)
+	}
+
+	if err := usecase.LoadDatabaseRepository(); err != nil {
+		slog.Error("error on handling mongodb", "error", err.Error())
 		panic(err)
 	}
 }
 
 func main() {
-	server.Initialize(cfg)
+	server.Initialize()
 }
