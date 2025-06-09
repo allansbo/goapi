@@ -31,7 +31,8 @@ func ConfigLog(outputs ...io.Writer) {
 	multi := io.MultiWriter(outputs...)
 
 	logger := slog.NewJSONHandler(multi, &slog.HandlerOptions{
-		Level: level,
+		Level:     level,
+		AddSource: true,
 	})
 
 	slog.SetDefault(slog.New(logger))
