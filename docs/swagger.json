@@ -9,6 +9,72 @@
     "host": "localhost:8080",
     "paths": {
         "/api/v1/locations": {
+            "get": {
+                "description": "Get all locations data from database based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get all locations data",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "moving",
+                            "stopped",
+                            "offline"
+                        ],
+                        "type": "string",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "vehicleId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "located documents",
+                        "schema": {
+                            "$ref": "#/definitions/dto.QueryLocationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "validation error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GlobalErrorHandlerResp"
+                        }
+                    },
+                    "404": {
+                        "description": "no locations found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DefaultResponseMessageOut"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GlobalErrorHandlerResp"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Insert location data into database",
                 "consumes": [
@@ -274,6 +340,34 @@
                 },
                 "vehicle_id": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PaginationInfoResponse": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.QueryLocationResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.LocationOutApp"
+                    }
+                },
+                "pagination_info": {
+                    "$ref": "#/definitions/dto.PaginationInfoResponse"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         },

@@ -36,7 +36,7 @@ func makeValidation(data any) *fiber.Error {
 	return nil
 }
 
-// LocationsAdd godoc
+// LocationsAddOne godoc
 //
 //	@Summary		Insert location data
 //	@Description	Insert location data into database
@@ -48,7 +48,7 @@ func makeValidation(data any) *fiber.Error {
 //	@Failure		400		{object}	GlobalErrorHandlerResp			"validation error"
 //	@Failure		500		{object}	GlobalErrorHandlerResp			"internal server error"
 //	@Router			/api/v1/locations [post]
-func LocationsAdd(c *fiber.Ctx) error {
+func LocationsAddOne(c *fiber.Ctx) error {
 	locationDataIn := new(dto.LocationInApp)
 	if err := c.BodyParser(locationDataIn); err != nil {
 		slog.Error("error parsing locationDataIn", "error", err.Error())
@@ -62,7 +62,7 @@ func LocationsAdd(c *fiber.Ctx) error {
 	if err := makeValidation(locationDataIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResp{
 			Success: false,
-			Message: "There is an error validating the location data provided",
+			Message: "there is an error validating the location data provided",
 			Error:   err.Error(),
 		})
 	}
@@ -80,7 +80,7 @@ func LocationsAdd(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(dto.LocationCreatedResponseOut{DocumentID: locationDataOut.ID})
 }
 
-// LocationsGet godoc
+// LocationsGetOne godoc
 //
 //	@Summary		Get location data
 //	@Description	Get location data from database based on a document_id
@@ -91,13 +91,13 @@ func LocationsAdd(c *fiber.Ctx) error {
 //	@Success		404	{object}	dto.DefaultResponseMessageOut	"document not found"
 //	@Failure		500	{object}	GlobalErrorHandlerResp			"internal server error"
 //	@Router			/api/v1/locations/{id} [get]
-func LocationsGet(c *fiber.Ctx) error {
+func LocationsGetOne(c *fiber.Ctx) error {
 	locationID := c.Params("id")
 
 	locationDataOut, err := usecase.GetLocationById(locationID)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return c.Status(fiber.StatusNotFound).JSON(dto.DefaultResponseMessageOut{
-				Message: fmt.Sprintf("the location ID %s does not exist", locationID),
+			Message: fmt.Sprintf("the location ID %s does not exist", locationID),
 		})
 	} else if err != nil {
 		slog.Error("error getting location", "error", err.Error(), "locationID", locationID)
@@ -111,7 +111,59 @@ func LocationsGet(c *fiber.Ctx) error {
 	return c.JSON(locationDataOut)
 }
 
-// LocationsUpdate godoc
+// LocationsGetAll godoc
+//
+//	@Summary		Get all locations data
+//	@Description	Get all locations data from database based on query parameters
+//	@Tags			Locations
+//	@Produce		json
+//	@Param			q	query		dto.QueryLocationRequest		false	"Query parameters for filtering locations"
+//	@Success		200	{object}	dto.QueryLocationResponse		"located documents"
+//	@Failure		400	{object}	GlobalErrorHandlerResp			"validation error"
+//	@Failure		404	{object}	dto.DefaultResponseMessageOut	"no locations found"
+//	@Failure		500	{object}	GlobalErrorHandlerResp			"internal server error"
+//	@Router			/api/v1/locations [get]
+func LocationsGetAll(c *fiber.Ctx) error {
+	queryParams := new(dto.QueryLocationRequest)
+
+	if err := c.QueryParser(queryParams); err != nil {
+		slog.Error("error parsing query parameters", "error", err.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(GlobalErrorHandlerResp{
+			Success: false,
+			Message: "there is an error processing the location data provided",
+			Error:   err.Error(),
+		})
+	}
+
+	if err := makeValidation(queryParams); err != nil {
+		slog.Error("error validating query parameters", "error", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResp{
+			Success: false,
+			Message: "query parameters are not valid",
+			Error:   err.Error(),
+		})
+	}
+
+	locationsDataOut, err := usecase.GetAllLocations(queryParams)
+	if err != nil {
+		slog.Error("error getting all locations", "error", err.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(GlobalErrorHandlerResp{
+			Success: false,
+			Message: "there is an error getting all location data",
+			Error:   err.Error(),
+		})
+	}
+
+	if len(locationsDataOut.Data) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(dto.DefaultResponseMessageOut{
+			Message: "no locations found",
+		})
+	}
+
+	return c.JSON(locationsDataOut)
+}
+
+// LocationsUpdateOne godoc
 //
 //	@Summary		Update location data
 //	@Description	Update location data into database based on a document_id
@@ -124,7 +176,7 @@ func LocationsGet(c *fiber.Ctx) error {
 //	@Success		404		{object}	dto.DefaultResponseMessageOut	"document not found"
 //	@Failure		500		{object}	GlobalErrorHandlerResp			"internal server error"
 //	@Router			/api/v1/locations/{id} [put]
-func LocationsUpdate(c *fiber.Ctx) error {
+func LocationsUpdateOne(c *fiber.Ctx) error {
 	locationID := c.Params("id")
 	locationDataIn := new(dto.LocationInApp)
 	if err := c.BodyParser(locationDataIn); err != nil {
@@ -139,7 +191,7 @@ func LocationsUpdate(c *fiber.Ctx) error {
 	if err := makeValidation(locationDataIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(GlobalErrorHandlerResp{
 			Success: false,
-			Message: "There is an error validating the location data provided",
+			Message: "there is an error validating the location data provided",
 			Error:   err.Error(),
 		})
 	}
@@ -165,7 +217,7 @@ func LocationsUpdate(c *fiber.Ctx) error {
 	})
 }
 
-// LocationsDelete godoc
+// LocationsDeleteOne godoc
 //
 //	@Summary		Delete location data
 //	@Description	Delete location data from database based on a document_id
@@ -176,7 +228,7 @@ func LocationsUpdate(c *fiber.Ctx) error {
 //	@Success		404	{object}	dto.DefaultResponseMessageOut	"document not found"
 //	@Success		500	{object}	GlobalErrorHandlerResp			"internal server error"
 //	@Router			/api/v1/locations/{id} [delete]
-func LocationsDelete(c *fiber.Ctx) error {
+func LocationsDeleteOne(c *fiber.Ctx) error {
 	locationID := c.Params("id")
 
 	locationDeleted, err := usecase.DeleteLocation(locationID)

@@ -59,6 +59,24 @@ definitions:
       vehicle_id:
         type: string
     type: object
+  dto.PaginationInfoResponse:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+    type: object
+  dto.QueryLocationResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.LocationOutApp'
+        type: array
+      pagination_info:
+        $ref: '#/definitions/dto.PaginationInfoResponse'
+      success:
+        type: boolean
+    type: object
   handler.GlobalErrorHandlerResp:
     properties:
       error:
@@ -76,6 +94,50 @@ info:
   version: "1.0"
 paths:
   /api/v1/locations:
+    get:
+      description: Get all locations data from database based on query parameters
+      parameters:
+      - in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - in: query
+        minimum: 1
+        name: page
+        type: integer
+      - enum:
+        - moving
+        - stopped
+        - offline
+        in: query
+        name: status
+        type: string
+      - in: query
+        name: vehicleId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: located documents
+          schema:
+            $ref: '#/definitions/dto.QueryLocationResponse'
+        "400":
+          description: validation error
+          schema:
+            $ref: '#/definitions/handler.GlobalErrorHandlerResp'
+        "404":
+          description: no locations found
+          schema:
+            $ref: '#/definitions/dto.DefaultResponseMessageOut'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/handler.GlobalErrorHandlerResp'
+      summary: Get all locations data
+      tags:
+      - Locations
     post:
       consumes:
       - application/json

@@ -37,3 +37,18 @@ type LocationInDB struct {
 	Speed     int              `bson:"speed"`
 	Status    string           `bson:"status"`
 }
+
+// QueryLocationOutDB is the input data for querying locations from the database.
+type QueryLocationOutDB struct {
+	Limit     int    `bson:"limit"`
+	Page      int    `bson:"page"`
+	VehicleId string `bson:"vehicle_id"`
+	Status    string `bson:"status"`
+}
+
+// QueryLocationInDB is the input data for retrieving locations from the database.
+type QueryLocationInDB struct {
+	Limit int             `bson:"limit"`
+	Page  int             `bson:"page"`
+	Data  []*LocationInDB `bson:"data"`
+}

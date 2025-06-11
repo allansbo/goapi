@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
-	"log/slog"
 )
 
 // MongoDBRepository implements the Repository interface for MongoDB operations.
@@ -52,8 +51,6 @@ func (m *MongoDBRepository) Ping() error {
 	if err := m.client.Ping(m.ctx, readpref.Primary()); err != nil {
 		return fmt.Errorf("mongodb ping failed: %w", err)
 	}
-
-	slog.Info("mongodb connection established")
 	return nil
 }
 
@@ -68,7 +65,6 @@ func (m *MongoDBRepository) InsertOne(location *dto.LocationOutDB) (string, erro
 		return "", err
 	}
 	id := res.InsertedID.(bson.ObjectID).Hex()
-	slog.Info("document inserted", "id", id)
 	return id, nil
 }
 
@@ -95,6 +91,49 @@ func (m *MongoDBRepository) GetOne(id string) (*dto.LocationInDB, error) {
 	}
 
 	return locationInDb, nil
+}
+
+// GetAll retrieves all documents from the collection, limited
+// by the specified count  and filtered by the provided filter.
+func (m *MongoDBRepository) GetAll(query *dto.QueryLocationOutDB) (*dto.QueryLocationInDB, error) {
+	if query.Page < 1 {
+		query.Page = 1
+	}
+	if query.Limit < 1 {
+		query.Limit = 10
+	}
+
+	filter := bson.M{}
+	if query.VehicleId != "" {
+		filter["vehicle_id"] = query.VehicleId
+	}
+	if query.Status != "" {
+		filter["status"] = query.Status
+	}
+
+	findOptions := options.Find()
+	findOptions.SetSkip(int64((query.Page - 1) * query.Limit)).SetLimit(int64(query.Limit))
+
+	cursor, err := m.collection().Find(m.ctx, filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	var locations []*dto.LocationInDB
+	if err := cursor.All(m.ctx, &locations); err != nil {
+		return nil, err
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	qLocationsInDB := new(dto.QueryLocationInDB)
+	qLocationsInDB.Limit = query.Limit
+	qLocationsInDB.Page = query.Page
+	qLocationsInDB.Data = locations
+
+	return qLocationsInDB, nil
 }
 
 // UpdateOne updates a single document by its ID in the collection.

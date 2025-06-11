@@ -15,8 +15,9 @@ func MakeRoutes(app *fiber.App) {
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
 
-	v1.Post("/locations", handler.LocationsAdd)
-	v1.Get("/locations/:id", handler.LocationsGet)
-	v1.Put("/locations/:id", handler.LocationsUpdate)
-	v1.Delete("/locations/:id", handler.LocationsDelete)
+	v1.Post("/locations", handler.LocationsAddOne)
+	v1.Get("/locations/:id", handler.LocationsGetOne)
+	v1.Get("/locations", handler.LocationsGetAll)
+	v1.Put("/locations/:id", handler.LocationsUpdateOne)
+	v1.Delete("/locations/:id", handler.LocationsDeleteOne)
 }

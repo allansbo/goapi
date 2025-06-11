@@ -10,6 +10,7 @@ type Repository interface {
 	Stop()
 	InsertOne(location *dto.LocationOutDB) (string, error)
 	GetOne(id string) (*dto.LocationInDB, error)
+	GetAll(query *dto.QueryLocationOutDB) (*dto.QueryLocationInDB, error)
 	UpdateOne(id string, location *dto.LocationOutDB) (bool, error)
 	DeleteOne(id string) (bool, error)
 }

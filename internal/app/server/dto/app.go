@@ -1,6 +1,8 @@
 package dto
 
-import "time"
+import (
+	"time"
+)
 
 // LocationInApp is the input data for the location endpoints
 // that will be used to create or update a new location.
@@ -37,4 +39,25 @@ type LocationCreatedResponseOut struct {
 
 type DefaultResponseMessageOut struct {
 	Message string `json:"message"`
+}
+
+// QueryLocationRequest is the request structure for querying locations.
+type QueryLocationRequest struct {
+	Limit     int    `query:"limit" validate:"omitempty,gte=1,lte=100"`
+	Page      int    `query:"page" validate:"omitempty,gte=1"`
+	VehicleId string `query:"vehicle_id" validate:"omitempty,alphanum,len=7"`
+	Status    string `query:"status" validate:"omitempty,oneof=moving stopped offline"`
+}
+
+// PaginationInfoResponse contains pagination information for the response.
+type PaginationInfoResponse struct {
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+}
+
+// QueryLocationResponse is the response structure for querying locations.
+type QueryLocationResponse struct {
+	Success    bool                    `json:"success"`
+	Data       []*LocationOutApp       `json:"data"`
+	Pagination *PaginationInfoResponse `json:"pagination_info,omitempty"`
 }

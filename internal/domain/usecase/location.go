@@ -45,6 +45,21 @@ func GetLocationById(id string) (*dto.LocationOutApp, error) {
 	return locationEntity.NewLocationOutApp(), nil
 }
 
+// GetAllLocations retrieves all locations from the database based on the provided query parameters.
+func GetAllLocations(queryParams *dto.QueryLocationRequest) (*dto.QueryLocationResponse, error) {
+	qLocationEntity := entity.NewQueryLocationRequest(queryParams)
+	qLocationOutDB := qLocationEntity.NewQueryLocationOutDB()
+
+	locationsInDB, err := l.repository.GetAll(qLocationOutDB)
+	if err != nil {
+		return nil, err
+	}
+
+	qLocationEntityOutApp := entity.NewQueryLocationResponse(locationsInDB)
+
+	return qLocationEntityOutApp.NewQueryLocationOutApp(), nil
+}
+
 // UpdateLocation updates an existing location in the database.
 // It takes a string ID and a pointer to dto.LocationInApp as input,
 // which contains the validated location data that will be updated.
