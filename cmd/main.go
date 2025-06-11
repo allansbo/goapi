@@ -25,6 +25,7 @@ var service locationService
 
 func init() {
 	logs.ConfigLog()
+	slog.Info("loaded logs")
 
 	var err error
 	service.cfg, err = config.LoadEnvConfig()
@@ -32,14 +33,17 @@ func init() {
 		slog.Error("error on loading environment", "error", err.Error())
 		panic(err)
 	}
+	slog.Info("loaded environment")
 
 	service.repository = db.NewMongoDBRepository(service.cfg)
 	if err := service.repository.Ping(); err != nil {
 		slog.Error("error on handling mongodb", "error", err.Error())
 		panic(err)
 	}
+	slog.Info("loaded mongodb")
 
 	usecase.LoadLocationUseCase(service.repository)
+	slog.Info("loaded use cases")
 }
 
 //	@title			Location API
